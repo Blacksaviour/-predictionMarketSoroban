@@ -6,8 +6,8 @@
 
 import { useState, useCallback } from "react";
 import { TransactionBuilder, SorobanDataBuilder } from "@stellar/stellar-sdk/base";
-import { readContract, simulateWrite } from "@/lib/soroban";
-import { signAndSendTransaction } from "@/lib/freighter";
+import { readContract, simulateWrite, rpc, PASSPHRASE } from "@/lib/soroban";
+import { signTransactionXdr } from "@/lib/freighter";
 import { parseSorobanError } from "@/lib/errorMap";
 import { NETWORK } from "@/lib/config";
 
@@ -88,9 +88,54 @@ export function useContract(contractId: string) {
       setResult({ success: false, loading: true, error: null, data: null, hash: null, retry });
 
       try {
-        const xdr = buildSorobanXDR(publicKey, sequenceNumber, operations);
-        const networkPassphrase = NETWORK.networkPassphrase;
-        const hash = await signAndSendTransaction(xdr, networkPassphrase);
+        // 1. Build the unsigned transaction envelope XDR.
+        const unsignedXdr = buildSorobanXDR(publicKey, sequenceNumber, operations);
+
+        // 2. Prepare the transaction (assembles Soroban resource/fee data via
+        //    RPC simulation) so Freighter can sign a valid Soroban tx.
+        const txEnvelope = TransactionBuilder.fromXDR(
+          unsignedXdr,
+          PASSPHRASE,
+        );
+        let preparedXdr = unsignedXdr;
+        try {
+          const prepared = await rpc.prepareTransaction(txEnvelope);
+          preparedXdr = prepared.toXDR();
+        } catch {
+          // If prepareTransaction is unavailable, sign the raw XDR.
+          preparedXdr = unsignedXdr;
+        }
+
+        // 3. Sign with Freighter (returns the signed XDR, does NOT submit).
+        const signedXdr = await signTransactionXdr(
+          preparedXdr,
+          NETWORK.networkPassphrase,
+          publicKey,
+        );
+
+        // 4. Submit the signed transaction to the network.
+        const sent = await rpc.sendTransaction(signedXdr);
+        if (sent.error) {
+          throw new Error(
+            sent.error?.message || "Failed to submit transaction to the network.",
+          );
+        }
+        const hash = sent.hash;
+
+        // 5. Poll for the final status so we can surface a real outcome.
+        let attempts = 0;
+        while (attempts < 15) {
+          const status = await rpc.getTransaction(hash);
+          if (status.status === "SUCCESS") {
+            setResult({ success: true, loading: false, error: null, data: null, hash, retry });
+            return hash;
+          }
+          if (status.status === "FAILED") {
+            throw new Error("Transaction failed on network.");
+          }
+          await new Promise((r) => setTimeout(r, 2000));
+          attempts += 1;
+        }
 
         setResult({ success: true, loading: false, error: null, data: null, hash, retry });
         return hash;

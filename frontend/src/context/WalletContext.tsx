@@ -20,7 +20,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import "../lib/polyfills";
 import {
-  isFreighterInstalled,
+  detectFreighter,
   getPublicKey,
   getNetwork,
 } from "@/lib/freighter";
@@ -58,7 +58,7 @@ export function useFreighterCheck() {
       }
       setIsChecking(true);
       try {
-        const installed = isFreighterInstalled();
+        const installed = await detectFreighter();
         setHasFreighter(installed);
       } catch {
         setHasFreighter(false);
@@ -111,11 +111,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       }
 
       try {
-        const installed = isFreighterInstalled();
+        // Poll for the async-injected extension bridge.
+        const installed = await detectFreighter();
         if (mounted) setHasFreighter(installed);
 
-        if (installed && window.stellarPubkey) {
-          // Try to get the public key if already connected
+        if (installed) {
+          // Try to get the public key if already authorized (no prompt).
           try {
             const key = await getPublicKey();
             if (mounted) {
@@ -123,7 +124,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
               setIsConnected(true);
             }
           } catch {
-            // User not connected or wallet not unlocked
+            // User not connected or wallet not unlocked — ignore.
           }
         }
       } catch {
@@ -154,12 +155,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     setIsConnecting(true);
 
     try {
-      // Verify Freighter is installed
-      if (!isFreighterInstalled()) {
+      // Verify Freighter is installed (poll for async injection).
+      if (!(await detectFreighter())) {
         throw new Error(
           "Freighter wallet is not installed. Please install the Freighter browser extension.",
         );
       }
+      setHasFreighter(true);
 
       // Get the public key (prompts user if needed)
       const key = await getPublicKey();

@@ -47,7 +47,7 @@ export function WalletConnect() {
         {hasFreighter ? (
           <span className="font-medium text-muted-foreground">Freighter installed</span>
         ) : (
-          <span className="text-muted-foreground">Browser extension detected</span>
+          <span className="text-muted-foreground">Freighter not detected</span>
         )}
       </div>
 

@@ -14,6 +14,50 @@
  * `@types/stellar__stellar-sdk` becomes available.
  */
 
+declare module "@stellar/freighter-api" {
+  /** Result wrapper returned by most freighter-api calls. */
+  export interface FreighterResult<T = any> {
+    data?: T;
+    error?: { code?: number | string; message?: string };
+  }
+
+  /** Request access / authorization. Returns the authorized address. */
+  export function requestAccess(): Promise<
+    FreighterResult<{ address: string }> & { address: string; error: any }
+  >;
+
+  /** Get the currently authorized address (no prompt). */
+  export function getAddress(): Promise<
+    FreighterResult<{ address: string }> & { address: string; error: any }
+  >;
+
+  /** Sign an XDR. Returns the signed XDR (does NOT submit). */
+  export function signTransaction(
+    entryXdr: string,
+    opts?: {
+      networkPassphrase?: string;
+      address?: string;
+      addressToSign?: string;
+      signWithSecureEnclave?: boolean;
+    },
+  ): Promise<
+    FreighterResult<{ signedTxXdr: string; signerAddress: string }> & {
+      signedTxXdr: string;
+      signerAddress: string;
+      error: any;
+    }
+  >;
+
+  /** Get the network the extension is configured for. */
+  export function getNetwork(): Promise<
+    FreighterResult<{ network: string; networkPassphrase: string }> & {
+      network: string;
+      networkPassphrase: string;
+      error: any;
+    }
+  >;
+}
+
 declare module "@stellar/stellar-sdk/rpc" {
   /** Minimal Soroban RPC server client surface used by the app. */
   export class Server {
@@ -27,6 +71,8 @@ declare module "@stellar/stellar-sdk/rpc" {
     ): Promise<{ result: T; isReadCall?: boolean }>;
     /** Simulate (dry-run) a transaction. */
     simulateTransaction(tx: any): Promise<any>;
+    /** Assemble Soroban resource/fee data into a signed-ready transaction. */
+    prepareTransaction(tx: any): Promise<any>;
     /** Submit a signed transaction. */
     sendTransaction(tx: any): Promise<any>;
     /** Fetch a transaction by hash. */
