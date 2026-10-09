@@ -28,17 +28,6 @@ import { CONTRACT_IDS } from "@/lib/config";
 /** Fee in stroops (1 stroop = 0.00001 XLM; default Freighter fee = 100 stroops). */
 const DEFAULT_FEE = 100;
 
-/** Convert a JS number or string to a hex string for BytesN<32> arguments. */
-function toBytes32(val: string | number | Buffer): string {
-  if (typeof val === "string") {
-    if (val.startsWith("0x")) {
-      return val.slice(2);
-    }
-    return Buffer.from(val, "utf8").toString("hex");
-  }
-  return val.toString(16).padStart(64, "0");
-}
-
 /**
  * Build a Soroban contract-invocation operation.
  *

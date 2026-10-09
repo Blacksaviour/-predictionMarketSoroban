@@ -4,7 +4,7 @@
 import { Buffer } from "buffer/";
 
 if (typeof globalThis.Buffer === "undefined") {
-  globalThis.Buffer = Buffer;
+  globalThis.Buffer = Buffer as unknown as typeof globalThis.Buffer;
 }
 
 if (typeof globalThis.process === "undefined") {

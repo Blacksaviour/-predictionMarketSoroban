@@ -89,29 +89,34 @@ export async function simulateWrite(
   // Build the invokeContract operation
   const operation = buildSorobanOperation(contractId, func, args);
 
-  // Simulate the transaction
-  const sim = await simulateTx(generateDummyAccount(), [operation]);
+  // Build an unsigned transaction around the operation using a dummy account.
+  const account = new Account(
+    "GA3KLYW2MKR5DR4ZGS6AKRCHNIUJ3AXWHQRVU6KYE7F6HEH6XVYQYHV2",
+    "1",
+  );
+  const builtTx = new TransactionBuilder(account, {
+    fee: "100",
+    networkPassphrase: PASSPHRASE,
+  })
+    .setTimeout(30)
+    .addOperation(operation)
+    .build();
+
+  // Simulate the transaction (dry-run, no signing/submission).
+  const sim = await rpc.simulateTransaction(builtTx);
 
   if (sim.error) {
     throw new Error(sim.error);
   }
 
-  return {
-    results: sim.result || [],
-    simulationXdr: sim.transaction?.toXDR() || "",
-  };
-}
+  const results = (sim as any).results || [];
+  const simulationXdr = (sim as any).transactionData
+    ? (sim as any).transactionData.toXDR()
+    : "";
 
-/**
- * Generate a dummy Account object with a test address and sequence number.
- * Used only for transaction building simulation.
- */
-function generateDummyAccount(): any {
   return {
-    address: "GA3KLYW2MKR5DR4ZGS6AKRCHNIUJ3AXWHQRVU6KYE7F6HEH6XVYQYHV2",
-    sequenceNumber: 1,
-    keypair: null,
-    sign: function() {},
+    results,
+    simulationXdr,
   };
 }
 

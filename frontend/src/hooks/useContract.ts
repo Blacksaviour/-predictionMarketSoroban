@@ -5,6 +5,7 @@
  */
 
 import { useState, useCallback } from "react";
+import { TransactionBuilder, SorobanDataBuilder } from "@stellar/stellar-sdk/base";
 import { readContract, simulateWrite } from "@/lib/soroban";
 import { signAndSendTransaction } from "@/lib/freighter";
 import { parseSorobanError } from "@/lib/errorMap";

@@ -10,7 +10,8 @@ import { WalletConnect } from "@/components/WalletConnect";
  * USDR Token Information Card
  */
 function USDRTokenCard() {
-  const { publicKey, isConnected, isConnecting, read } = useContract(CONTRACT_IDS.usdrToken);
+  const { publicKey, isConnected } = useStellarWallet();
+  const { read } = useContract(CONTRACT_IDS.usdrToken);
   const [balance, setBalance] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 

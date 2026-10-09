@@ -33,8 +33,6 @@ interface FreighterWindowAPI {
   isUnlocked?: () => Promise<{ unlocked: boolean }>;
   /** Request the user's public key (G… address). */
   getPublicKey: () => Promise<string>;
-  /** Request the user's public key, prompting them to connect if needed. */
-  getPublicKey?: () => Promise<string>;
   /** Enable access to the wallet (bring extension to front, prompt user). */
   enable?: () => Promise<string>;
   /** Sign and return the XDR for a Soroban transaction (no submission). */
