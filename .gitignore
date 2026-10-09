@@ -1,0 +1,13 @@
+target/
+Cargo.lock
+**/*.rs.bk
+.rspec
+
+# Soroban / Stellar
+.wallets/
+.env
+.idea
+.vscode
+
+# Soroban test snapshots (regenerated on every run)
+test_snapshots/

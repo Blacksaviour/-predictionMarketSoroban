@@ -1,0 +1,19 @@
+[package]
+name = "shared"
+description = "Shared constants, errors, events, fixed-point math and types for the Rain USDR Soroban port."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+publish = false
+
+[lib]
+crate-type = ["lib"]
+doctest = false
+
+[dependencies]
+soroban-sdk = { workspace = true }
+
+[dev-dependencies]
+soroban-sdk = { workspace = true, features = ["testutils"] }
